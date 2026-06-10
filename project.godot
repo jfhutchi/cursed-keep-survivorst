@@ -10,7 +10,8 @@ config_version=5
 
 [application]
 
-config/name="CursedKeep"
+config/name="Reward Loop Seed"
+run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"
 
