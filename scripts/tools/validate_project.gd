@@ -3,6 +3,12 @@ extends SceneTree
 ## Run with:
 ##   godot --headless --path . --script res://scripts/tools/validate_project.gd
 ## Exits 0 when every check passes, 1 otherwise.
+##
+## Note: in --script mode Godot does not expose autoload singletons to the
+## GDScript compiler, so preloading gameplay scripts prints harmless
+## "Identifier not found: GameEvents" compile errors to stderr. The checks
+## below only read those scripts' constants, which still resolve, and the
+## exit code is unaffected. Judge runs by the printed PASS/FAIL summary.
 
 const WeaponDataT := preload("res://scripts/data/weapon_data.gd")
 const EnemyDataT := preload("res://scripts/data/enemy_data.gd")

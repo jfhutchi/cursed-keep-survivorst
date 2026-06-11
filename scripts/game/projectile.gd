@@ -154,7 +154,7 @@ func _check_enemy_hits() -> void:
 		if _hit_ids.has(eid):
 			continue
 		_hit_ids[eid] = true
-		var result: Dictionary = world.deal_damage(enemy, damage, source, {"crit_bonus": crit_bonus, "kb": dir * 90.0})
+		world.deal_damage(enemy, damage, source, {"crit_bonus": crit_bonus, "kb": dir * 90.0})
 		if bleed > 0.0 and enemy.alive:
 			enemy.apply_bleed(damage * bleed / 2.0, 2.0)
 		if burn_dps > 0.0 and enemy.alive:

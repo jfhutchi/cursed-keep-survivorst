@@ -2,6 +2,11 @@ extends Node
 ## Global signal bus for Cursed Keep Survivors.
 ## Autoloaded as GameEvents. Systems communicate through these signals
 ## instead of holding direct references to each other.
+##
+## Every signal here is emitted by OTHER scripts (GameEvents.x.emit(...)),
+## which the per-script analyzer cannot see — so silence the false-positive
+## "declared but never explicitly used" warnings for this file.
+@warning_ignore_start("unused_signal")
 
 # Run lifecycle
 signal run_started

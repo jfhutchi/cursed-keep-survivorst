@@ -2153,7 +2153,7 @@ FINAL INSTRUCTION
 Begin by inspecting the repository.
 
 Do not ask for clarification.
-
+d
 Make reasonable decisions.
 
 Preserve Godot AI/MCP/addon tooling.

@@ -216,4 +216,4 @@ func _on_boss_health(hp: float, max_hp: float) -> void:
 
 
 static func _format_time(t: float) -> String:
-	return "%d:%02d" % [int(t) / 60, int(t) % 60]
+	return "%d:%02d" % [floori(t / 60.0), int(t) % 60]

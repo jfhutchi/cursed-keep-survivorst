@@ -94,4 +94,4 @@ func show_results(stats: Dictionary, records: Dictionary) -> void:
 
 
 static func _format_time(t: float) -> String:
-	return "%d:%02d" % [int(t) / 60, int(t) % 60]
+	return "%d:%02d" % [floori(t / 60.0), int(t) % 60]
