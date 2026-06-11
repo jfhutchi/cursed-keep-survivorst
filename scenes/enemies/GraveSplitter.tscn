@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/generated/enemies/grave_splitter.svg" id="2"]
+
+[node name="GraveSplitter" type="Node2D"]
+script = ExtResource("1")
+enemy_id = "grave_splitter"
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2")

@@ -1,0 +1,28 @@
+<svg width="42" height="42" viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg">
+  <!-- Grave Splitter: shambling ossuary that splits when broken. Original art. -->
+  <defs>
+    <linearGradient id="ossuary" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d8cdb0"/>
+      <stop offset="1" stop-color="#9a8f74"/>
+    </linearGradient>
+  </defs>
+  <!-- bulky bone-pile torso -->
+  <path d="M21 4 C31 5 37 12 36 22 C35.5 31 30 38 21 39 C12 38 6.5 31 6 22 C5 12 11 5 21 4 Z" fill="url(#ossuary)" stroke="#56503e" stroke-width="1.6"/>
+  <!-- crack lines hinting at the split -->
+  <path d="M21 6 L19 16 L23 24 L19 32 L21 38" stroke="#56503e" stroke-width="1.6" fill="none"/>
+  <path d="M12 12 L17 18 M30 12 L25 18 M11 27 L17 28 M31 27 L25 28" stroke="#6e6650" stroke-width="1.2"/>
+  <!-- embedded skulls -->
+  <ellipse cx="13.5" cy="21" rx="4" ry="3.6" fill="#e8e0cf" stroke="#56503e" stroke-width="1"/>
+  <circle cx="12.2" cy="20.5" r="1" fill="#231f14"/>
+  <circle cx="15" cy="20.5" r="1" fill="#231f14"/>
+  <ellipse cx="28.5" cy="21" rx="4" ry="3.6" fill="#e8e0cf" stroke="#56503e" stroke-width="1"/>
+  <circle cx="27.2" cy="20.5" r="1" fill="#231f14"/>
+  <circle cx="30" cy="20.5" r="1" fill="#231f14"/>
+  <!-- crowning skull -->
+  <ellipse cx="21" cy="9.5" rx="5" ry="4.4" fill="#efe7d6" stroke="#56503e" stroke-width="1.2"/>
+  <circle cx="19" cy="9" r="1.3" fill="#231f14"/>
+  <circle cx="23" cy="9" r="1.3" fill="#231f14"/>
+  <circle cx="19" cy="9" r="0.6" fill="#8aff64"/>
+  <circle cx="23" cy="9" r="0.6" fill="#8aff64"/>
+  <path d="M19 12.4 L20 13.4 L21 12.4 L22 13.4 L23 12.4" stroke="#56503e" stroke-width="1" fill="none"/>
+</svg>

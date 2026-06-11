@@ -1,0 +1,14 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2" y="2" width="60" height="60" rx="10" fill="#141022" stroke="#43395f" stroke-width="2"/>
+  <circle cx="32" cy="32" r="20" fill="none" stroke="#ff9add" stroke-width="2.2"/>
+  <circle cx="32" cy="32" r="14" fill="#2a1226" fill-opacity="0.8"/>
+  <!-- skull rune -->
+  <ellipse cx="32" cy="28" rx="8" ry="7.4" fill="#ffd2ef"/>
+  <rect x="28" y="33" width="8" height="5" rx="1.6" fill="#ffd2ef"/>
+  <circle cx="29" cy="27.4" r="2.2" fill="#2a1226"/>
+  <circle cx="35" cy="27.4" r="2.2" fill="#2a1226"/>
+  <path d="M30 36 L30 38 M32 36 L32 38.4 M34 36 L34 38" stroke="#2a1226" stroke-width="1.2"/>
+  <!-- mark slash -->
+  <path d="M18 46 L46 18" stroke="#ff9add" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M44 44 L48 48 M48 44 L44 48" stroke="#ff9add" stroke-width="2" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,64 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+  <!-- Main menu background: the keep against a cursed sky. Original art. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b0716"/>
+      <stop offset="0.55" stop-color="#1d1233"/>
+      <stop offset="1" stop-color="#2c1840"/>
+    </linearGradient>
+    <radialGradient id="moon" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#d8c8ff"/>
+      <stop offset="0.7" stop-color="#8a6acc" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#8a6acc" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#171028"/>
+      <stop offset="1" stop-color="#0a0614"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#sky)"/>
+  <!-- cursed moon -->
+  <circle cx="980" cy="160" r="150" fill="url(#moon)"/>
+  <circle cx="980" cy="160" r="62" fill="#cabcf2"/>
+  <circle cx="958" cy="142" r="9" fill="#a896d8"/>
+  <circle cx="1002" cy="176" r="13" fill="#a896d8"/>
+  <circle cx="978" cy="190" r="6" fill="#a896d8"/>
+  <!-- distant keep silhouette -->
+  <g fill="#0e0a1c">
+    <path d="M420 720 L420 420 L450 420 L450 380 L470 380 L470 420 L500 420 L500 340 L520 340 L520 310 L545 310 L545 340 L565 340 L565 420 L600 420 L600 290 L625 290 L625 255 L640 230 L655 255 L655 290 L680 290 L680 420 L715 420 L715 350 L740 350 L740 320 L762 320 L762 350 L782 350 L782 420 L820 420 L820 390 L845 390 L845 440 L860 440 L860 720 Z"/>
+  </g>
+  <!-- glowing keep windows -->
+  <g fill="#9dff6e" opacity="0.85">
+    <rect x="528" y="352" width="8" height="14" rx="3"/>
+    <rect x="746" y="362" width="8" height="14" rx="3"/>
+  </g>
+  <g fill="#d86bff" opacity="0.9">
+    <rect x="632" y="300" width="10" height="16" rx="4"/>
+    <rect x="610" y="360" width="7" height="12" rx="3"/>
+    <rect x="664" y="360" width="7" height="12" rx="3"/>
+  </g>
+  <g fill="#7fd4ff" opacity="0.7">
+    <rect x="456" y="430" width="7" height="12" rx="3"/>
+    <rect x="826" y="430" width="7" height="12" rx="3"/>
+  </g>
+  <!-- ground fog -->
+  <rect y="540" width="1280" height="180" fill="url(#ground)"/>
+  <ellipse cx="300" cy="560" rx="320" ry="46" fill="#3a2a5d" opacity="0.22"/>
+  <ellipse cx="900" cy="580" rx="380" ry="52" fill="#3a2a5d" opacity="0.18"/>
+  <ellipse cx="640" cy="610" rx="500" ry="60" fill="#241a40" opacity="0.3"/>
+  <!-- drifting soul motes -->
+  <g fill="#7fd4ff" opacity="0.5">
+    <circle cx="180" cy="420" r="3"/>
+    <circle cx="240" cy="300" r="2"/>
+    <circle cx="1080" cy="380" r="2.6"/>
+    <circle cx="1180" cy="480" r="2"/>
+    <circle cx="80" cy="540" r="2.4"/>
+  </g>
+  <g fill="#9dff6e" opacity="0.4">
+    <circle cx="350" cy="500" r="2.2"/>
+    <circle cx="940" cy="520" r="2.4"/>
+    <circle cx="1120" cy="260" r="1.8"/>
+  </g>
+  <!-- vignette -->
+  <rect width="1280" height="720" fill="#060410" opacity="0.18"/>
+</svg>
