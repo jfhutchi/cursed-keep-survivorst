@@ -1,0 +1,20 @@
+<svg width="30" height="38" viewBox="0 0 30 38" xmlns="http://www.w3.org/2000/svg">
+  <!-- Wraith: torn drifting shadow. Original art. -->
+  <defs>
+    <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9db4e8"/>
+      <stop offset="0.6" stop-color="#5a6ea8"/>
+      <stop offset="1" stop-color="#2c3558" stop-opacity="0.1"/>
+    </linearGradient>
+  </defs>
+  <!-- flowing shroud with torn hem -->
+  <path d="M15 2 C22 3 25 9 24 16 C23.5 22 25 26 23 30 L20 27 L19 33 L16 29 L15 36 L14 29 L11 33 L10 27 L7 30 C5 26 6.5 22 6 16 C5 9 8 3 15 2 Z" fill="url(#shade)" stroke="#39406b" stroke-width="1.2"/>
+  <!-- hollow face -->
+  <ellipse cx="15" cy="10" rx="5.6" ry="5.2" fill="#11142a"/>
+  <circle cx="12.6" cy="9.4" r="1.5" fill="#bfe2ff"/>
+  <circle cx="17.4" cy="9.4" r="1.5" fill="#bfe2ff"/>
+  <path d="M13 13.6 Q15 15.4 17 13.6" stroke="#7fa8d8" stroke-width="1.1" fill="none"/>
+  <!-- wisp arms -->
+  <path d="M7 14 C3 16 2 20 3.5 23" stroke="#7388c2" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M23 14 C27 16 28 20 26.5 23" stroke="#7388c2" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,41 @@
+<svg width="160" height="160" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+  <!-- Game emblem: the cursed keep with its burning heart. Original art. -->
+  <defs>
+    <radialGradient id="heartglow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffb3e0"/>
+      <stop offset="0.5" stop-color="#d86bff"/>
+      <stop offset="1" stop-color="#d86bff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="keepstone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a4068"/>
+      <stop offset="1" stop-color="#251e3d"/>
+    </linearGradient>
+  </defs>
+  <!-- shield backing -->
+  <path d="M80 6 L142 26 L138 96 C134 122 110 142 80 152 C50 142 26 122 22 96 L18 26 Z" fill="#120d22" stroke="#d8b25a" stroke-width="4"/>
+  <path d="M80 14 L134 31 L130 94 C126 116 106 134 80 143 C54 134 34 116 30 94 L26 31 Z" fill="none" stroke="#6e5a8a" stroke-width="2"/>
+  <!-- keep towers -->
+  <g fill="url(#keepstone)" stroke="#0e0a1c" stroke-width="2.4">
+    <path d="M36 70 L36 56 L42 56 L42 61 L48 61 L48 56 L54 56 L54 70 L54 112 L36 112 Z"/>
+    <path d="M106 70 L106 56 L112 56 L112 61 L118 61 L118 56 L124 56 L124 70 L124 112 L106 112 Z"/>
+    <path d="M58 52 L58 38 L65 38 L65 44 L73 44 L73 38 L80 38 L87 38 L87 44 L95 44 L95 38 L102 38 L102 52 L102 118 L58 118 Z"/>
+  </g>
+  <!-- gate -->
+  <path d="M70 118 L70 96 C70 88 74 84 80 84 C86 84 90 88 90 96 L90 118 Z" fill="#0a0716" stroke="#0e0a1c" stroke-width="2"/>
+  <path d="M73 118 L73 98 M80 118 L80 96 M87 118 L87 98" stroke="#2c2348" stroke-width="1.6"/>
+  <!-- cursed heart above the keep -->
+  <circle cx="80" cy="62" r="22" fill="url(#heartglow)"/>
+  <path d="M80 52 C85 52 89 57 88 62 C87.2 66.4 83 69.6 80 72 C77 69.6 72.8 66.4 72 62 C71 57 75 52 80 52 Z" fill="#e84a9a" stroke="#5d1238" stroke-width="2"/>
+  <!-- window glows -->
+  <g fill="#9dff6e">
+    <rect x="43" y="76" width="4" height="7" rx="1.4"/>
+    <rect x="113" y="76" width="4" height="7" rx="1.4"/>
+  </g>
+  <g fill="#7fd4ff">
+    <rect x="66" y="60" width="4" height="8" rx="1.6"/>
+    <rect x="90" y="60" width="4" height="8" rx="1.6"/>
+  </g>
+  <!-- motto banner -->
+  <path d="M40 126 L120 126 L114 136 L46 136 Z" fill="#1d1530" stroke="#d8b25a" stroke-width="1.8"/>
+  <path d="M52 131 L108 131" stroke="#d8b25a" stroke-width="1.6" stroke-dasharray="4 3"/>
+</svg>

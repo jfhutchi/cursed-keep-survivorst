@@ -1,0 +1,14 @@
+<svg width="20" height="36" viewBox="0 0 20 36" xmlns="http://www.w3.org/2000/svg">
+  <!-- Wall torch with cursed flame. Original art. -->
+  <defs>
+    <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#ff9a3c"/>
+      <stop offset="0.6" stop-color="#ffd24a"/>
+      <stop offset="1" stop-color="#fff2b8"/>
+    </linearGradient>
+  </defs>
+  <rect x="8.4" y="16" width="3.2" height="18" rx="1.4" fill="#4a3a26" stroke="#241a0e" stroke-width="1"/>
+  <path d="M6.5 16 L13.5 16 L12.5 20 L7.5 20 Z" fill="#5d4a30" stroke="#241a0e" stroke-width="1"/>
+  <path d="M10 2 C13.5 6 14.5 9.5 13 13 C12.2 15 11 16 10 16 C9 16 7.8 15 7 13 C5.5 9.5 6.5 6 10 2 Z" fill="url(#flame)"/>
+  <path d="M10 6 C11.6 8.4 11.8 11 10.6 13 C10.3 13.7 10 14 10 14 C10 14 9.7 13.7 9.4 13 C8.2 11 8.4 8.4 10 6 Z" fill="#fff8dc"/>
+</svg>

@@ -1,0 +1,8 @@
+<svg width="72" height="64" viewBox="0 0 72 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Cracked stone with faint curse-light seeping through. Original art. -->
+  <path d="M6 30 L20 26 L30 34 L42 28 L52 38 L66 34" fill="none" stroke="#0a0712" stroke-width="3" stroke-linecap="round"/>
+  <path d="M30 34 L26 46 L34 56 M42 28 L46 16 L40 8" fill="none" stroke="#0a0712" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M20 26 L16 14" fill="none" stroke="#0a0712" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M30 34 L42 28" fill="none" stroke="#7a4adc" stroke-width="1.2" stroke-opacity="0.55"/>
+  <path d="M26 46 L34 56" fill="none" stroke="#7a4adc" stroke-width="0.9" stroke-opacity="0.4"/>
+</svg>
