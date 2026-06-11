@@ -202,7 +202,7 @@ func _fire_soul_bolt() -> bool:
 		"size": wstat("soul_bolt", "size"), "max_distance": wstat("soul_bolt", "range") * 1.3,
 		"soulburst": soulburst}
 	if world.synergies.has("soulfire_covenant"):
-		params["burn_dps"] = wstat("soul_bolt", "damage") * 0.4
+		params["burn_dps"] = wstat("soul_bolt", "damage") * 0.5
 		params["burn_dur"] = 2.0
 	for i in count:
 		var spread := (i - (count - 1) * 0.5) * 0.15
