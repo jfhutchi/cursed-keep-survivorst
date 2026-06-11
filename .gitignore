@@ -4,3 +4,6 @@
 
 # Local export output
 /build/
+.vscode/
+addons/
+.claude/
