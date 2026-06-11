@@ -52,6 +52,12 @@ var _enemy_scenes: Dictionary = {}
 
 
 func _ready() -> void:
+	# Main runs with PROCESS_MODE_ALWAYS so menus work while paused — but
+	# children inherit that, so the world must opt back in to pausing or
+	# get_tree().paused would never freeze gameplay (enemies kept attacking
+	# behind the level-up and pause screens).
+	process_mode = Node.PROCESS_MODE_PAUSABLE
+
 	var arena := Arena.new()
 	arena.z_index = -20
 	add_child(arena)
