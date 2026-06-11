@@ -53,6 +53,20 @@ func state_name() -> String:
 	return State.keys()[state]
 
 
+## Web: browsers keep Godot's audio worklet running when the tab is
+## backgrounded, so mute on focus loss (and pause a running fight).
+func _notification(what: int) -> void:
+	if not OS.has_feature("web"):
+		return
+	match what:
+		NOTIFICATION_APPLICATION_FOCUS_OUT:
+			AudioServer.set_bus_mute(0, true)
+			if state == State.PLAYING:
+				_pause()
+		NOTIFICATION_APPLICATION_FOCUS_IN:
+			AudioServer.set_bus_mute(0, false)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause"):
 		match state:
@@ -65,6 +79,11 @@ func _unhandled_input(event: InputEvent) -> void:
 # === FLOW ==================================================================
 
 func start_run() -> void:
+	if OS.has_feature("web") and DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_FULLSCREEN:
+		# Runs inside a button/key press (a user gesture), so the browser
+		# honors the fullscreen request; with the project's landscape
+		# orientation setting, mobile browsers also lock to landscape.
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	main_menu.visible = false
 	game_over_screen.visible = false
 	victory_screen.visible = false
