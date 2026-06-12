@@ -2,7 +2,7 @@ name: Deploy Web Build to GitHub Pages
 
 on:
   push:
-    branches: [master]
+    branches: [master, fable5_test]
   workflow_dispatch:
 
 permissions:
