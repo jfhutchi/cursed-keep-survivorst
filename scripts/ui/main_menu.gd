@@ -54,6 +54,13 @@ func _ready() -> void:
 	controls.pressed.connect(_toggle_controls)
 	center.add_child(controls)
 
+	var music := UiTheme.make_button(_music_label(), 18)
+	music.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	music.pressed.connect(func() -> void:
+		AudioManager.set_music_enabled(not AudioManager.is_music_enabled())
+		music.text = _music_label())
+	center.add_child(music)
+
 	if not OS.has_feature("web"):
 		var quit := UiTheme.make_button("ABANDON (QUIT)", 18)
 		quit.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -110,6 +117,10 @@ func _build_controls_panel() -> void:
 
 func _toggle_controls() -> void:
 	_controls_panel.visible = not _controls_panel.visible
+
+
+static func _music_label() -> String:
+	return "MUSIC: ON" if AudioManager.is_music_enabled() else "MUSIC: OFF"
 
 
 func refresh_records() -> void:

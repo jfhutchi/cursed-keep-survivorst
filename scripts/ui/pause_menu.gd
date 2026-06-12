@@ -48,4 +48,14 @@ func _ready() -> void:
 	menu.pressed.connect(func() -> void: menu_pressed.emit())
 	v.add_child(menu)
 
+	var music := UiTheme.make_button(_music_label(), 16)
+	music.pressed.connect(func() -> void:
+		AudioManager.set_music_enabled(not AudioManager.is_music_enabled())
+		music.text = _music_label())
+	v.add_child(music)
+
 	v.add_child(UiTheme.make_label("WASD move · SPACE dash · ESC resume · F3 debug", 12, Color(0.55, 0.52, 0.65)))
+
+
+static func _music_label() -> String:
+	return "MUSIC: ON" if AudioManager.is_music_enabled() else "MUSIC: OFF"

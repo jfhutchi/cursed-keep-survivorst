@@ -3,8 +3,13 @@ extends Node
 ## Procedural audio. Autoloaded as AudioManager.
 ##
 ## Every sound in the game is synthesized at startup into AudioStreamWAV
-## buffers (sine/square/noise/bell partials with pitch sweeps and decay
-## envelopes). No external or downloaded audio is used anywhere.
+## buffers. No external or downloaded audio is used anywhere.
+##
+## Synth engine ("v2"): each sound is built from a detuned dual sine pair,
+## optional extra partials (for bells/metal), a sub-oscillator for impact
+## weight, lowpass-filtered noise (instead of raw white noise), soft
+## tanh saturation (instead of chippy square waves), a shimmer band for
+## magic, and a comb-echo tail that gives everything a stone-hall space.
 ##
 ## Usage:
 ##   AudioManager.play(&"xp_pickup")
@@ -13,59 +18,64 @@ extends Node
 const SAMPLE_RATE := 22050
 const PLAYER_COUNT := 16
 
-# kind: "tone" (sine), "bell" (sine + inharmonic partial), "noise", "chord"
-# f0/f1: start/end frequency sweep, dur: seconds, decay: envelope power,
-# square/noise: 0..1 mix amounts, vol: 0..1 amplitude.
+# Param reference (all optional except f0):
+#   f0/f1     start/end pitch sweep (Hz)        dur      seconds (pre-tail)
+#   decay     amp envelope power                vol      0..1 amplitude
+#   detune    Hz offset of the 2nd oscillator   drive    >1 = soft saturation
+#   partials  [[ratio, amp], ...] extra sines   sub      sub-osc amount (f*0.5)
+#   noise     0..1 filtered-noise mix           nlp0/1   noise lowpass sweep Hz
+#   shimmer   high sparkle amount               echo     0..1 stone-hall tail
+#   attack    seconds (default 0.004)           lp       final polish lowpass Hz
 const SFX: Dictionary = {
 	# --- UI / run events -------------------------------------------------
-	&"ui_click": {"f0": 660.0, "f1": 880.0, "dur": 0.07, "decay": 1.5, "vol": 0.5},
-	&"ui_hover": {"f0": 440.0, "f1": 470.0, "dur": 0.04, "decay": 1.5, "vol": 0.25},
-	&"run_start": {"f0": 220.0, "f1": 440.0, "dur": 0.5, "decay": 1.6, "vol": 0.6, "harmonic": 0.4},
-	&"wave_start": {"f0": 196.0, "f1": 165.0, "dur": 0.65, "decay": 1.3, "vol": 0.55, "harmonic": 0.5},
-	&"level_up": {"f0": 523.0, "f1": 1046.0, "dur": 0.55, "decay": 1.8, "vol": 0.65, "harmonic": 0.3},
-	&"upgrade_pick": {"f0": 784.0, "f1": 988.0, "dur": 0.22, "decay": 1.8, "vol": 0.5},
-	&"game_over": {"f0": 220.0, "f1": 55.0, "dur": 1.4, "decay": 1.2, "vol": 0.7, "square": 0.2},
-	&"victory": {"f0": 392.0, "f1": 784.0, "dur": 1.2, "decay": 1.1, "vol": 0.7, "harmonic": 0.6},
+	&"ui_click": {"f0": 740.0, "f1": 560.0, "dur": 0.12, "decay": 2.2, "vol": 0.3, "detune": 3.0, "echo": 0.2, "lp": 5200.0},
+	&"ui_hover": {"f0": 520.0, "f1": 540.0, "dur": 0.06, "decay": 2.0, "vol": 0.16, "detune": 2.0, "lp": 4200.0},
+	&"run_start": {"f0": 110.0, "f1": 220.0, "dur": 0.9, "decay": 1.5, "vol": 0.5, "detune": 2.5, "partials": [[2.0, 0.3], [3.0, 0.12]], "echo": 0.4},
+	&"wave_start": {"f0": 98.0, "f1": 82.4, "dur": 1.1, "decay": 1.3, "vol": 0.46, "drive": 1.5, "partials": [[2.0, 0.25], [2.99, 0.1]], "sub": 0.3, "echo": 0.5},
+	&"level_up": {"f0": 523.0, "f1": 1046.0, "dur": 0.9, "decay": 1.7, "vol": 0.5, "detune": 4.0, "shimmer": 0.3, "echo": 0.5},
+	&"upgrade_pick": {"f0": 392.0, "f1": 523.0, "dur": 0.35, "decay": 1.8, "vol": 0.4, "detune": 3.0, "echo": 0.3},
+	&"game_over": {"f0": 165.0, "f1": 41.0, "dur": 2.2, "decay": 1.2, "vol": 0.6, "sub": 0.5, "drive": 1.4, "echo": 0.6},
+	&"victory": {"f0": 392.0, "f1": 784.0, "dur": 2.0, "decay": 1.2, "vol": 0.55, "partials": [[1.5, 0.2], [2.0, 0.25]], "shimmer": 0.25, "echo": 0.6},
 
 	# --- Player ----------------------------------------------------------
-	&"dash": {"f0": 900.0, "f1": 300.0, "dur": 0.16, "decay": 1.6, "vol": 0.4, "noise": 0.45},
-	&"player_hurt": {"f0": 240.0, "f1": 110.0, "dur": 0.25, "decay": 1.6, "vol": 0.6, "square": 0.4},
-	&"player_death": {"f0": 330.0, "f1": 40.0, "dur": 1.3, "decay": 1.1, "vol": 0.75, "square": 0.3, "noise": 0.2},
-	&"heal": {"f0": 520.0, "f1": 780.0, "dur": 0.3, "decay": 1.7, "vol": 0.45},
-	&"xp_pickup": {"f0": 980.0, "f1": 1320.0, "dur": 0.08, "decay": 2.2, "vol": 0.32},
+	&"dash": {"f0": 300.0, "f1": 140.0, "dur": 0.28, "decay": 1.6, "vol": 0.3, "noise": 0.9, "nlp0": 1600.0, "nlp1": 320.0, "echo": 0.15},
+	&"player_hurt": {"f0": 200.0, "f1": 90.0, "dur": 0.3, "decay": 1.6, "vol": 0.5, "sub": 0.6, "drive": 1.6, "noise": 0.25, "nlp0": 1100.0, "echo": 0.2},
+	&"player_death": {"f0": 220.0, "f1": 36.0, "dur": 1.8, "decay": 1.2, "vol": 0.62, "sub": 0.7, "drive": 1.6, "noise": 0.3, "nlp0": 900.0, "echo": 0.55},
+	&"heal": {"f0": 440.0, "f1": 660.0, "dur": 0.5, "decay": 1.7, "vol": 0.36, "detune": 3.0, "shimmer": 0.2, "echo": 0.35},
+	&"xp_pickup": {"f0": 1175.0, "f1": 1568.0, "dur": 0.14, "decay": 2.4, "vol": 0.2, "detune": 5.0, "echo": 0.18, "lp": 7600.0},
 
 	# --- Enemies ---------------------------------------------------------
-	&"enemy_hit": {"f0": 320.0, "f1": 240.0, "dur": 0.06, "decay": 1.8, "vol": 0.34, "noise": 0.5},
-	&"enemy_death": {"f0": 260.0, "f1": 90.0, "dur": 0.22, "decay": 1.7, "vol": 0.4, "noise": 0.55},
-	&"elite_death": {"f0": 200.0, "f1": 60.0, "dur": 0.5, "decay": 1.4, "vol": 0.55, "noise": 0.4, "harmonic": 0.5},
-	&"hexer_cast": {"f0": 500.0, "f1": 340.0, "dur": 0.3, "decay": 1.5, "vol": 0.4, "square": 0.5},
-	&"knight_charge": {"f0": 150.0, "f1": 420.0, "dur": 0.45, "decay": 1.2, "vol": 0.5, "noise": 0.3},
+	&"enemy_hit": {"f0": 240.0, "f1": 170.0, "dur": 0.09, "decay": 1.9, "vol": 0.3, "noise": 0.45, "nlp0": 2400.0, "drive": 1.3},
+	&"enemy_death": {"f0": 200.0, "f1": 70.0, "dur": 0.35, "decay": 1.7, "vol": 0.34, "noise": 0.5, "nlp0": 1500.0, "sub": 0.25, "echo": 0.2},
+	&"elite_death": {"f0": 165.0, "f1": 52.0, "dur": 0.7, "decay": 1.4, "vol": 0.46, "noise": 0.4, "nlp0": 1300.0, "sub": 0.4, "partials": [[2.76, 0.2]], "echo": 0.4},
+	&"hexer_cast": {"f0": 420.0, "f1": 300.0, "dur": 0.4, "decay": 1.5, "vol": 0.32, "detune": 5.0, "shimmer": 0.15, "echo": 0.3},
+	&"knight_charge": {"f0": 130.0, "f1": 320.0, "dur": 0.5, "decay": 1.3, "vol": 0.4, "noise": 0.55, "nlp0": 950.0, "drive": 1.5, "echo": 0.3},
 
 	# --- Boss ------------------------------------------------------------
-	&"boss_spawn": {"f0": 98.0, "f1": 49.0, "dur": 1.6, "decay": 1.0, "vol": 0.8, "square": 0.35, "harmonic": 0.6},
-	&"boss_hurt": {"f0": 180.0, "f1": 130.0, "dur": 0.12, "decay": 1.6, "vol": 0.4, "noise": 0.35},
-	&"boss_attack": {"f0": 130.0, "f1": 70.0, "dur": 0.5, "decay": 1.3, "vol": 0.6, "square": 0.5},
-	&"boss_death": {"f0": 220.0, "f1": 30.0, "dur": 2.0, "decay": 0.9, "vol": 0.85, "noise": 0.35, "harmonic": 0.7},
+	&"boss_spawn": {"f0": 73.0, "f1": 36.5, "dur": 2.2, "decay": 1.1, "vol": 0.66, "sub": 0.6, "drive": 1.5, "partials": [[1.5, 0.2], [2.76, 0.12]], "echo": 0.6},
+	&"boss_hurt": {"f0": 160.0, "f1": 120.0, "dur": 0.18, "decay": 1.7, "vol": 0.32, "noise": 0.3, "nlp0": 1400.0},
+	&"boss_attack": {"f0": 110.0, "f1": 60.0, "dur": 0.6, "decay": 1.4, "vol": 0.48, "sub": 0.5, "drive": 1.6, "echo": 0.4},
+	&"boss_death": {"f0": 196.0, "f1": 27.0, "dur": 2.6, "decay": 1.0, "vol": 0.7, "sub": 0.7, "noise": 0.35, "nlp0": 800.0, "partials": [[2.76, 0.2]], "echo": 0.65},
 
-	# --- Weapons ---------------------------------------------------------
-	&"w_soul_bolt": {"f0": 720.0, "f1": 980.0, "dur": 0.09, "decay": 2.0, "vol": 0.3},
-	&"w_rune_knives": {"f0": 1400.0, "f1": 900.0, "dur": 0.08, "decay": 2.2, "vol": 0.28, "noise": 0.4},
-	&"w_orbiting_relics": {"f0": 180.0, "f1": 220.0, "dur": 0.18, "decay": 1.6, "vol": 0.22, "harmonic": 0.5},
-	&"w_cursed_flame": {"f0": 300.0, "f1": 120.0, "dur": 0.35, "decay": 1.3, "vol": 0.4, "noise": 0.75},
-	&"w_bone_spikes": {"f0": 220.0, "f1": 80.0, "dur": 0.2, "decay": 1.7, "vol": 0.45, "noise": 0.6, "square": 0.3},
-	&"w_chain_hex": {"f0": 1600.0, "f1": 400.0, "dur": 0.13, "decay": 1.9, "vol": 0.34, "square": 0.6},
-	&"w_sanctified_nova": {"f0": 660.0, "f1": 660.0, "dur": 0.5, "decay": 1.5, "vol": 0.45, "harmonic": 0.8},
-	&"w_blood_scythe": {"f0": 500.0, "f1": 180.0, "dur": 0.22, "decay": 1.5, "vol": 0.42, "noise": 0.55},
-	&"w_grave_bell": {"f0": 196.0, "f1": 194.0, "dur": 0.9, "decay": 1.2, "vol": 0.5, "harmonic": 0.9},
-	&"w_thorn_sigil": {"f0": 350.0, "f1": 240.0, "dur": 0.16, "decay": 1.7, "vol": 0.3, "noise": 0.5},
-	&"w_phantom_bow": {"f0": 1100.0, "f1": 500.0, "dur": 0.18, "decay": 1.8, "vol": 0.36, "noise": 0.25},
-	&"w_plague_lantern": {"f0": 260.0, "f1": 200.0, "dur": 0.4, "decay": 1.2, "vol": 0.3, "noise": 0.65},
-	&"w_iron_maiden": {"f0": 140.0, "f1": 90.0, "dur": 0.3, "decay": 1.5, "vol": 0.5, "square": 0.6, "noise": 0.3},
-	&"w_astral_tome": {"f0": 840.0, "f1": 1100.0, "dur": 0.14, "decay": 1.8, "vol": 0.3, "harmonic": 0.4},
-	&"w_moon_chakram": {"f0": 950.0, "f1": 1250.0, "dur": 0.2, "decay": 1.6, "vol": 0.3, "noise": 0.2},
-	&"w_death_mark": {"f0": 480.0, "f1": 160.0, "dur": 0.3, "decay": 1.4, "vol": 0.38, "square": 0.45},
-	&"w_storm_censer": {"f0": 2000.0, "f1": 200.0, "dur": 0.25, "decay": 1.6, "vol": 0.42, "noise": 0.7},
-	&"w_saints_hammer": {"f0": 110.0, "f1": 45.0, "dur": 0.55, "decay": 1.2, "vol": 0.6, "square": 0.4, "noise": 0.35},
+	# --- Weapons (distinct, fuller cues) ----------------------------------
+	&"w_soul_bolt": {"f0": 660.0, "f1": 880.0, "dur": 0.16, "decay": 2.0, "vol": 0.22, "detune": 4.0, "shimmer": 0.12, "echo": 0.2, "lp": 7800.0},
+	&"w_rune_knives": {"f0": 1320.0, "f1": 880.0, "dur": 0.22, "decay": 2.1, "vol": 0.2, "partials": [[2.31, 0.3], [3.7, 0.16]], "noise": 0.15, "nlp0": 5200.0, "echo": 0.25},
+	&"w_orbiting_relics": {"f0": 165.0, "f1": 196.0, "dur": 0.25, "decay": 1.6, "vol": 0.15, "detune": 2.0, "partials": [[2.76, 0.15]], "echo": 0.2},
+	&"w_cursed_flame": {"f0": 220.0, "f1": 90.0, "dur": 0.5, "decay": 1.4, "vol": 0.3, "noise": 0.85, "nlp0": 1800.0, "nlp1": 480.0, "echo": 0.25},
+	&"w_bone_spikes": {"f0": 180.0, "f1": 60.0, "dur": 0.3, "decay": 1.7, "vol": 0.36, "noise": 0.6, "nlp0": 3000.0, "nlp1": 900.0, "sub": 0.35, "drive": 1.5, "echo": 0.25},
+	&"w_chain_hex": {"f0": 1400.0, "f1": 320.0, "dur": 0.2, "decay": 1.8, "vol": 0.26, "detune": 8.0, "drive": 1.6, "noise": 0.2, "nlp0": 4200.0, "echo": 0.3},
+	&"w_sanctified_nova": {"f0": 523.0, "f1": 519.0, "dur": 0.8, "decay": 1.5, "vol": 0.32, "partials": [[2.76, 0.35], [5.4, 0.1]], "shimmer": 0.2, "echo": 0.5},
+	&"w_blood_scythe": {"f0": 420.0, "f1": 160.0, "dur": 0.3, "decay": 1.5, "vol": 0.3, "noise": 0.55, "nlp0": 2600.0, "nlp1": 850.0, "echo": 0.25},
+	&"w_grave_bell": {"f0": 147.0, "f1": 146.0, "dur": 1.4, "decay": 1.1, "vol": 0.36, "partials": [[2.76, 0.4], [5.4, 0.14]], "echo": 0.6},
+	&"w_thorn_sigil": {"f0": 280.0, "f1": 200.0, "dur": 0.25, "decay": 1.7, "vol": 0.22, "noise": 0.5, "nlp0": 1300.0, "echo": 0.2},
+	&"w_phantom_bow": {"f0": 880.0, "f1": 392.0, "dur": 0.3, "decay": 1.8, "vol": 0.26, "detune": 5.0, "noise": 0.25, "nlp0": 2200.0, "echo": 0.3},
+	&"w_plague_lantern": {"f0": 240.0, "f1": 180.0, "dur": 0.5, "decay": 1.3, "vol": 0.22, "noise": 0.6, "nlp0": 680.0, "shimmer": 0.08, "echo": 0.3},
+	&"w_iron_maiden": {"f0": 220.0, "f1": 210.0, "dur": 0.5, "decay": 1.5, "vol": 0.34, "partials": [[1.51, 0.4], [2.62, 0.25]], "drive": 1.5, "sub": 0.3, "echo": 0.4},
+	&"w_astral_tome": {"f0": 740.0, "f1": 988.0, "dur": 0.25, "decay": 1.8, "vol": 0.22, "shimmer": 0.25, "noise": 0.12, "nlp0": 3000.0, "echo": 0.35},
+	&"w_moon_chakram": {"f0": 880.0, "f1": 1175.0, "dur": 0.3, "decay": 1.7, "vol": 0.22, "detune": 6.0, "noise": 0.15, "nlp0": 4600.0, "echo": 0.3},
+	&"w_death_mark": {"f0": 392.0, "f1": 147.0, "dur": 0.4, "decay": 1.4, "vol": 0.26, "drive": 1.4, "sub": 0.3, "shimmer": 0.1, "echo": 0.4},
+	&"w_storm_censer": {"f0": 1600.0, "f1": 90.0, "dur": 0.6, "decay": 1.5, "vol": 0.34, "noise": 0.7, "nlp0": 2600.0, "nlp1": 380.0, "sub": 0.45, "drive": 1.6, "echo": 0.5},
+	&"w_saints_hammer": {"f0": 98.0, "f1": 40.0, "dur": 0.8, "decay": 1.3, "vol": 0.46, "sub": 0.8, "drive": 1.8, "noise": 0.4, "nlp0": 1100.0, "partials": [[1.5, 0.2]], "echo": 0.5},
 }
 
 var _streams: Dictionary = {}
@@ -106,7 +116,22 @@ func apply_volumes() -> void:
 		return
 
 	var music_vol := float(_save_data().get("music_volume", 1.0))
-	_music_player.volume_db = linear_to_db(clampf(music_vol, 0.0001, 1.0)) - 13.0
+	if music_vol <= 0.001:
+		_music_player.volume_db = -80.0
+	else:
+		_music_player.volume_db = linear_to_db(clampf(music_vol, 0.0001, 1.0)) - 11.0
+
+
+func is_music_enabled() -> bool:
+	return float(_save_data().get("music_volume", 1.0)) > 0.001
+
+
+func set_music_enabled(enabled: bool) -> void:
+	var save_system := get_node_or_null("/root/SaveSystem")
+	if save_system != null:
+		save_system.data["music_volume"] = 1.0 if enabled else 0.0
+		save_system.save()
+	apply_volumes()
 
 
 func play(id: StringName, volume_db_offset := 0.0, pitch_jitter := 0.05) -> void:
@@ -148,154 +173,183 @@ func _save_data() -> Dictionary:
 	return save_data if save_data is Dictionary else {}
 
 
-## Synthesizes one sound effect from its parameter dictionary.
+## Synthesizes one sound effect from its parameter dictionary (engine v2).
 func _synth(p: Dictionary) -> AudioStreamWAV:
 	var dur := float(p.get("dur", 0.2))
-	var n := int(dur * SAMPLE_RATE)
+	var echo := float(p.get("echo", 0.0))
+	var tail := 0.42 * echo + 0.03
+	var note_n := int(dur * SAMPLE_RATE)
+	var n := int((dur + tail) * SAMPLE_RATE)
 
-	var bytes := PackedByteArray()
-	bytes.resize(n * 2)
+	var mix := PackedFloat32Array()
+	mix.resize(n)
 
 	var f0 := float(p.get("f0", 440.0))
 	var f1 := float(p.get("f1", f0))
+	var detune := float(p.get("detune", 0.0))
+	var partials: Array = p.get("partials", [])
+	var sub_amt := float(p.get("sub", 0.0))
 	var noise_mix := float(p.get("noise", 0.0))
-	var square_mix := float(p.get("square", 0.0))
-	var harmonic := float(p.get("harmonic", 0.0))
+	var nlp0 := float(p.get("nlp0", 2400.0))
+	var nlp1 := float(p.get("nlp1", nlp0))
+	var shimmer := float(p.get("shimmer", 0.0))
+	var drive := float(p.get("drive", 0.0))
 	var decay_pow := float(p.get("decay", 1.6))
-	var vol := float(p.get("vol", 0.6))
-	var attack_samples := maxi(1, int(0.004 * SAMPLE_RATE))
-	var phase := 0.0
+	var vol := float(p.get("vol", 0.5))
+	var attack_samples := maxi(1, int(float(p.get("attack", 0.004)) * SAMPLE_RATE))
 
-	for i in range(n):
-		var t := float(i) / float(n)
+	var phase := 0.0
+	var phase_d := 0.0
+	var phase_sub := 0.0
+	var noise_state := 0.0
+	var drive_norm := tanh(drive) if drive > 0.0 else 1.0
+
+	for i in range(note_n):
+		var t := float(i) / float(note_n)
 		var freq := lerpf(f0, f1, t * t * (3.0 - 2.0 * t))
 
 		phase += TAU * freq / float(SAMPLE_RATE)
-
 		var s := sin(phase)
 
-		if square_mix > 0.0:
-			s = lerpf(s, signf(s), square_mix)
+		if detune > 0.0:
+			phase_d += TAU * (freq + detune) / float(SAMPLE_RATE)
+			s = s * 0.6 + sin(phase_d) * 0.4
 
-		if harmonic > 0.0:
-			s += harmonic * sin(phase * 2.76) * (1.0 - t)
+		for part in partials:
+			s += float(part[1]) * sin(phase * float(part[0])) * (1.0 - t * 0.7)
+
+		if sub_amt > 0.0:
+			phase_sub += TAU * freq * 0.5 / float(SAMPLE_RATE)
+			s += sub_amt * sin(phase_sub) * pow(1.0 - t, 1.4)
+
+		if shimmer > 0.0:
+			s += shimmer * sin(phase * 3.98) * (0.5 + 0.5 * sin(TAU * 9.0 * t)) * (1.0 - t)
 
 		if noise_mix > 0.0:
-			s = lerpf(s, _rng.randf() * 2.0 - 1.0, noise_mix)
+			var cutoff := lerpf(nlp0, nlp1, t)
+			var alpha := clampf(1.0 - exp(-TAU * cutoff / SAMPLE_RATE), 0.0, 1.0)
+			noise_state += (_rng.randf() * 2.0 - 1.0 - noise_state) * alpha
+			s = lerpf(s, noise_state * 2.4, noise_mix)
+
+		if drive > 0.0:
+			s = tanh(s * drive) / drive_norm
 
 		var env := pow(1.0 - t, decay_pow)
-
 		if i < attack_samples:
 			env *= float(i) / float(attack_samples)
 
-		bytes.encode_s16(i * 2, int(clampf(s * env * vol, -1.0, 1.0) * 32000.0))
+		mix[i] = s * env * vol
+
+	# Stone-hall tail: two feedback combs smear the sound into the room.
+	if echo > 0.0:
+		var d1 := int(0.067 * SAMPLE_RATE)
+		var d2 := int(0.103 * SAMPLE_RATE)
+		var g1 := echo * 0.5
+		var g2 := echo * 0.34
+		for i in range(d1, n):
+			mix[i] += mix[i - d1] * g1
+		for i in range(d2, n):
+			mix[i] += mix[i - d2] * g2
+
+	# Final polish lowpass to round off any digital fizz.
+	var lp := float(p.get("lp", 8800.0))
+	var lp_a := clampf(1.0 - exp(-TAU * lp / SAMPLE_RATE), 0.0, 1.0)
+	var lp_state := 0.0
+	for i in range(n):
+		lp_state += (mix[i] - lp_state) * lp_a
+		mix[i] = lp_state
+
+	var bytes := PackedByteArray()
+	bytes.resize(n * 2)
+	for i in range(n):
+		bytes.encode_s16(i * 2, int(clampf(mix[i], -1.0, 1.0) * 32000.0))
 
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = SAMPLE_RATE
 	stream.data = bytes
-
 	return stream
 
 
-## A driving gothic march in the Super Ghouls 'n Ghosts / Castlevania mold:
-## an A-minor i-VII-VI-V (Am-G-F-E) Andalusian cadence carried by a square
-## lead melody, a galloping square bassline, baroque arpeggios and a march
-## beat. Original, synthesized, 8 bars at 138 BPM (~13.9 s), loops.
+## Slow crypt ambience: a deep detuned drone breathing under a funeral bell
+## that tolls twice per loop, sparse minor-key notes, cold air, and echoing
+## water drips. Everything is washed through cavern combs. Original,
+## synthesized, ~19 s, loops seamlessly on the drone.
 func _build_music_loop() -> AudioStreamWAV:
-	var bpm := 138.0
-	var beats_per_bar := 4
-	var bars := 8
-	var spb := int(SAMPLE_RATE * 60.0 / bpm)
-	var n := spb * bars * beats_per_bar
+	var dur := 19.2
+	var n := int(dur * SAMPLE_RATE)
 
 	var mix := PackedFloat32Array()
 	mix.resize(n)
 
-	# Semitone offsets from A4 (440 Hz). The descending bass roots A-G-F-E
-	# give the gothic "epic minor" feel; the E chord is major (harmonic-minor
-	# dominant) for that dramatic leading-tone pull back to Am.
-	var bar_root := [-24, -26, -28, -29, -24, -26, -28, -29]
-	var bar_fifth := [-17, -19, -21, -22, -17, -19, -21, -22]
-	var bar_oct := [-12, -14, -16, -17, -12, -14, -16, -17]
-	var bar_arp := [
-		[-12, -9, -5, 0],
-		[-14, -10, -7, -2],
-		[-16, -12, -9, -4],
-		[-17, -13, -10, -5],
-		[-12, -9, -5, 0],
-		[-14, -10, -7, -2],
-		[-16, -12, -9, -4],
-		[-17, -13, -10, -5],
+	# --- drone bed: A1 + detuned partner + low fifth, breathing slowly ----
+	var p1 := 0.0
+	var p2 := 0.0
+	var p3 := 0.0
+	var p4 := 0.0
+	for i in range(n):
+		var loop_t := float(i) / float(n)
+		var t := float(i) / float(SAMPLE_RATE)
+		p1 += TAU * 55.0 / SAMPLE_RATE
+		p2 += TAU * 55.33 / SAMPLE_RATE
+		p3 += TAU * 82.41 / SAMPLE_RATE
+		p4 += TAU * 110.0 / SAMPLE_RATE
+		var breath := 0.62 + 0.38 * sin(TAU * loop_t)            # loop-seamless swell
+		var slow := 0.5 + 0.5 * sin(TAU * 0.11 * t + 1.7)
+		var s := sin(p1) * 0.4 + sin(p2) * 0.34
+		s += sin(p3) * 0.16 * slow
+		s += sin(p4) * 0.07 * (1.0 - slow)
+		s += (_rng.randf() * 2.0 - 1.0) * 0.012 * breath          # cold air
+		mix[i] = s * 0.34 * breath
+
+	# --- funeral bell: tolls at 0 s and half-loop ---------------------------
+	for toll_at in [0.8, dur * 0.5 + 0.8]:
+		_mix_bell(mix, int(toll_at * SAMPLE_RATE), 110.0, 0.30, 7.5)
+
+	# --- sparse minor notes (A C E B-flat colour), long soft sines ----------
+	var crypt_notes := [
+		[2.6, -24], [5.4, -21], [7.8, -17], [9.0, -23],
+		[12.2, -24], [14.6, -20], [16.4, -17], [17.8, -22],
 	]
-	var gallop := [0, 2, 1, 2, 0, 2, 1, 2]
+	for note in crypt_notes:
+		var when := float(note[0])
+		var semi := int(note[1])
+		_synth_note(mix, int(when * SAMPLE_RATE), int(2.2 * SAMPLE_RATE),
+			_mtof(semi), 0.085, 1.0, 0.3, 0.5, 0.004, 0.5)
 
-	for bar in range(bars):
-		var bar_start := bar * beats_per_bar * spb
+	# --- water drips: tiny bright pings, seeded placement -------------------
+	var drip_rng := RandomNumberGenerator.new()
+	drip_rng.seed = 0x5EED
+	for d in 6:
+		var when := drip_rng.randf_range(1.0, dur - 1.5)
+		var freq := drip_rng.randf_range(1200.0, 1900.0)
+		var start := int(when * SAMPLE_RATE)
+		var count := int(0.06 * SAMPLE_RATE)
+		var ph := 0.0
+		for i in range(count):
+			var idx := start + i
+			if idx >= n:
+				break
+			var t2 := float(i) / float(count)
+			ph += TAU * lerpf(freq, freq * 0.82, t2) / SAMPLE_RATE
+			mix[idx] += sin(ph) * pow(1.0 - t2, 2.6) * 0.05
 
-		# Galloping eighth-note bass.
-		for e8 in range(8):
-			var pick := int(gallop[e8])
-			var bass_semi := int(bar_root[bar])
+	# --- cavern: long combs wash everything together -------------------------
+	var d1 := int(0.31 * SAMPLE_RATE)
+	var d2 := int(0.47 * SAMPLE_RATE)
+	for i in range(d1, n):
+		mix[i] += mix[i - d1] * 0.34
+	for i in range(d2, n):
+		mix[i] += mix[i - d2] * 0.26
 
-			if pick == 1:
-				bass_semi = int(bar_fifth[bar])
-			elif pick == 2:
-				bass_semi = int(bar_oct[bar])
-
-			var bass_start := bar_start + int(e8 * 0.5 * spb)
-			_synth_note(mix, bass_start, int(0.5 * spb), _mtof(bass_semi), 0.30, 0.15, 0.02, 0.14, 0.0, 0.5)
-
-		# Baroque sixteenth-note arpeggio.
-		var chord: Array = bar_arp[bar] as Array
-
-		for s16 in range(16):
-			var arp_semi := int(chord[s16 % 4])
-			var arp_start := bar_start + int(s16 * 0.25 * spb)
-			_synth_note(mix, arp_start, int(0.25 * spb), _mtof(arp_semi), 0.13, 0.25, 0.01, 0.45, 0.0, 0.5)
-
-		# March beat.
-		_synth_kick(mix, bar_start, 0.45)
-		_synth_kick(mix, bar_start + 2 * spb, 0.38)
-		_synth_noise(mix, bar_start + spb, 0.12, 0.14, 7.0, 190.0, 0.25)
-		_synth_noise(mix, bar_start + 3 * spb, 0.12, 0.14, 7.0, 190.0, 0.25)
-
-		for h in range(8):
-			_synth_noise(mix, bar_start + int(h * 0.5 * spb), 0.03, 0.045, 10.0)
-
-	# Square lead melody.
-	var melody := [
-		[0, 1.0], [2, 0.5], [3, 0.5], [2, 1.0], [0, 1.0],
-		[2, 1.0], [3, 0.5], [5, 0.5], [7, 2.0],
-		[8, 1.0], [7, 0.5], [5, 0.5], [3, 1.0], [2, 1.0],
-		[3, 1.0], [2, 0.5], [0, 0.5], [-1, 2.0],
-		[0, 1.0], [3, 0.5], [7, 0.5], [12, 1.0], [10, 1.0],
-		[10, 1.0], [8, 0.5], [7, 0.5], [5, 2.0],
-		[8, 1.0], [7, 0.5], [5, 0.5], [3, 1.0], [2, 1.0],
-		[3, 1.0], [2, 0.5], [-1, 0.5], [0, 2.0],
-	]
-
-	var beat_cursor := 0.0
-
-	for note in melody:
-		var note_data: Array = note as Array
-		var mel_semi := int(note_data[0])
-		var beats := float(note_data[1])
-
-		_synth_note(mix, int(beat_cursor * spb), int(beats * spb), _mtof(mel_semi), 0.30, 0.45, 0.05, 0.14, 0.006, 0.5)
-		beat_cursor += beats
-
-	# Normalize to keep the dense mix from clipping, then encode to 16-bit.
+	# normalize, encode, loop
 	var peak := 0.0001
-
 	for v in mix:
 		peak = maxf(peak, absf(v))
-
-	var gain := 0.92 / peak
+	var gain := 0.85 / peak
 
 	var bytes := PackedByteArray()
 	bytes.resize(n * 2)
-
 	for i in range(n):
 		bytes.encode_s16(i * 2, int(clampf(mix[i] * gain, -1.0, 1.0) * 32000.0))
 
@@ -305,8 +359,29 @@ func _build_music_loop() -> AudioStreamWAV:
 	stream.data = bytes
 	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	stream.loop_end = n
-
 	return stream
+
+
+## A deep inharmonic bell with a very long decay, mixed into the buffer.
+func _mix_bell(mix: PackedFloat32Array, start: int, freq: float, vol: float, decay_s: float) -> void:
+	var n := mix.size()
+	var count := mini(int(decay_s * SAMPLE_RATE), n - start)
+	var ph1 := 0.0
+	var ph2 := 0.0
+	var ph3 := 0.0
+	for i in range(count):
+		var idx := start + i
+		if idx < 0 or idx >= n:
+			continue
+		var t := float(i) / float(count)
+		ph1 += TAU * freq / SAMPLE_RATE
+		ph2 += TAU * freq * 2.76 / SAMPLE_RATE
+		ph3 += TAU * freq * 5.4 / SAMPLE_RATE
+		var s := sin(ph1) + sin(ph2) * 0.45 * (1.0 - t * 0.6) + sin(ph3) * 0.14 * (1.0 - t)
+		var env := pow(1.0 - t, 2.6)
+		if i < 90:
+			env *= float(i) / 90.0
+		mix[idx] += s * env * vol
 
 
 ## MIDI-style pitch: semitone offset from A4 (440 Hz) to frequency.
@@ -359,53 +434,3 @@ func _synth_note(
 			env = float(count - i) / float(rel)
 
 		mix[idx] += s * env * vol
-
-
-## Adds a percussive kick: a fast downward pitch sweep with a sharp decay.
-func _synth_kick(mix: PackedFloat32Array, start: int, vol: float) -> void:
-	var count := int(0.14 * SAMPLE_RATE)
-	var n := mix.size()
-	var phase := 0.0
-
-	for i in range(count):
-		var idx := start + i
-
-		if idx >= n:
-			break
-
-		var t := float(i) / float(count)
-		var freq := lerpf(165.0, 52.0, t * t)
-
-		phase += TAU * freq / SAMPLE_RATE
-
-		mix[idx] += sin(phase) * pow(1.0 - t, 2.2) * vol
-
-
-## Adds a noise burst (snare/hat); an optional tone mix tightens a snare body.
-func _synth_noise(
-	mix: PackedFloat32Array,
-	start: int,
-	dur_s: float,
-	vol: float,
-	decay: float,
-	tone_freq := 0.0,
-	tone_mix := 0.0
-) -> void:
-	var count := int(dur_s * SAMPLE_RATE)
-	var n := mix.size()
-	var phase := 0.0
-
-	for i in range(count):
-		var idx := start + i
-
-		if idx >= n:
-			break
-
-		var t := float(i) / float(count)
-		var s := _rng.randf() * 2.0 - 1.0
-
-		if tone_mix > 0.0:
-			phase += TAU * tone_freq / SAMPLE_RATE
-			s = lerpf(s, sin(phase), tone_mix)
-
-		mix[idx] += s * pow(1.0 - t, decay) * vol

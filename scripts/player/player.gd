@@ -13,7 +13,7 @@ const BASE_STATS := {
 	"dash_cooldown": 2.2,
 	"armor": 0.0,                  # % damage reduction (can go negative)
 	"pickup_radius": 130.0,
-	"xp_mult": 1.0,
+	"xp_mult": 5.0,
 	"damage_mult": 1.0,
 	"cooldown_mult": 1.0,
 	"projectile_speed_mult": 1.0,
@@ -21,7 +21,7 @@ const BASE_STATS := {
 	"duration_mult": 1.0,
 	"crit_chance": 0.05,
 	"crit_mult": 1.5,
-	"luck": 1.0,
+	"luck": 10.0,
 	"score_mult": 1.0,
 	"knockback_mult": 1.0,
 	"projectile_bonus": 0.0,

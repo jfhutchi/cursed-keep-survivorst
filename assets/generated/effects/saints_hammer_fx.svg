@@ -1,0 +1,45 @@
+<svg width="72" height="100" viewBox="0 0 72 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Saint's Hammer: spectral warhammer, drawn striking-end down. Original art. -->
+  <defs>
+    <linearGradient id="head" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe8b8"/>
+      <stop offset="0.45" stop-color="#e8b96a"/>
+      <stop offset="1" stop-color="#a8783a"/>
+    </linearGradient>
+    <linearGradient id="haft" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4a3a26"/>
+      <stop offset="0.5" stop-color="#6a5638"/>
+      <stop offset="1" stop-color="#3a2c1c"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff2cf" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#ffd76a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- holy halo around the head -->
+  <ellipse cx="36" cy="70" rx="34" ry="26" fill="url(#halo)"/>
+  <!-- haft -->
+  <rect x="32.5" y="2" width="7" height="58" rx="3" fill="url(#haft)" stroke="#241a0e" stroke-width="1.4"/>
+  <rect x="31" y="6" width="10" height="4" rx="2" fill="#caa84e" stroke="#5d4a1e" stroke-width="1"/>
+  <rect x="31" y="30" width="10" height="4" rx="2" fill="#caa84e" stroke="#5d4a1e" stroke-width="1"/>
+  <!-- grip wrap -->
+  <path d="M33 14 L39 18 M33 20 L39 24 M33 26 L39 30" stroke="#241a0e" stroke-width="1.2"/>
+  <!-- hammer head: flared faces -->
+  <path d="M10 56 L62 56 L66 76 C66 84 58 90 36 90 C14 90 6 84 6 76 Z" fill="url(#head)" stroke="#5d4a1e" stroke-width="2"/>
+  <!-- iron bands -->
+  <path d="M10 62 L62 62" stroke="#5d4a1e" stroke-width="2.4"/>
+  <path d="M8 74 L64 74" stroke="#8a6c34" stroke-width="1.6"/>
+  <!-- side bevels -->
+  <path d="M10 56 L6 76 L10 80 Z" fill="#fff2cf" fill-opacity="0.5"/>
+  <path d="M62 56 L66 76 L62 80 Z" fill="#7a5828" fill-opacity="0.7"/>
+  <!-- engraved glowing cross sigil -->
+  <rect x="33" y="63" width="6" height="22" rx="2.4" fill="#fff6dd"/>
+  <rect x="26" y="68" width="20" height="6" rx="2.4" fill="#fff6dd"/>
+  <circle cx="36" cy="71" r="3" fill="#ffd76a"/>
+  <!-- striking face glow -->
+  <path d="M14 88 C22 91 50 91 58 88" stroke="#fff2cf" stroke-width="2.6" fill="none" stroke-opacity="0.9"/>
+  <!-- floating spark motes -->
+  <circle cx="12" cy="50" r="1.8" fill="#ffe9a0" fill-opacity="0.9"/>
+  <circle cx="60" cy="48" r="1.4" fill="#ffe9a0" fill-opacity="0.8"/>
+  <circle cx="67" cy="64" r="1.2" fill="#fff6dd" fill-opacity="0.8"/>
+</svg>
