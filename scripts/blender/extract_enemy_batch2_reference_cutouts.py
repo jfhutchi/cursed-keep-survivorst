@@ -43,6 +43,7 @@ SOURCES = {
         "source": REFERENCE_ROOT / "5-Photo-5.jpg",
         "crop": (535, 360, 790, 842),
         "clear_rects": [(0, 0, 18, 105)],
+        "gray_clear_rects": [(74, 292, 154, 437)],
         "post_clear_rects": [(210, 300, 255, 360)],
         "edge_color_tolerance": 46,
     },
@@ -164,6 +165,22 @@ def clear_rects(image: Image.Image, rects: list[tuple[int, int, int, int]]) -> I
     return rgba
 
 
+def clear_gray_background_rects(image: Image.Image, rects: list[tuple[int, int, int, int]]) -> Image.Image:
+    rgba = image.convert("RGBA")
+    pixels = rgba.load()
+    width, height = rgba.size
+    for left, top, right, bottom in rects:
+        for y in range(max(0, top), min(height, bottom)):
+            for x in range(max(0, left), min(width, right)):
+                r, g, b, a = pixels[x, y]
+                if a == 0:
+                    continue
+                max_delta = max(abs(r - g), abs(g - b), abs(r - b))
+                if max_delta < 20 and 55 <= r <= 165 and 55 <= g <= 165 and 55 <= b <= 165:
+                    pixels[x, y] = (r, g, b, 0)
+    return rgba
+
+
 def trim_to_alpha(image: Image.Image) -> Image.Image:
     rgba = image.convert("RGBA")
     alpha_bbox = rgba.getbbox()
@@ -223,6 +240,7 @@ def main() -> dict[str, str]:
             cutout = flood_background_alpha(cropped)
         cutout = clear_rects(cutout, config.get("clear_rects", []))
         cutout = remove_tiny_alpha_components(cutout, min_area=config.get("min_area", 25))
+        cutout = clear_gray_background_rects(cutout, config.get("gray_clear_rects", []))
         cutout = clear_rects(cutout, config.get("post_clear_rects", []))
         cutout = trim_to_alpha(cutout)
         out_path = OUTPUT_ROOT / f"{name}.png"
