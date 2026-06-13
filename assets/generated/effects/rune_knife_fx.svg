@@ -1,0 +1,20 @@
+<svg width="40" height="14" viewBox="0 0 40 14" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rune knife projectile, points +x. Original art. -->
+  <defs>
+    <linearGradient id="blade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7a5acc"/>
+      <stop offset="0.55" stop-color="#c08bff"/>
+      <stop offset="1" stop-color="#f2e6ff"/>
+    </linearGradient>
+  </defs>
+  <!-- blade -->
+  <path d="M12 7 L38 7 L26 1.5 L14 4 Z" fill="url(#blade)"/>
+  <path d="M12 7 L38 7 L26 12.5 L14 10 Z" fill="#8a64d8"/>
+  <path d="M14 7 L36 7" stroke="#f2e6ff" stroke-width="0.9" stroke-opacity="0.9"/>
+  <!-- guard + grip -->
+  <rect x="9.5" y="2.5" width="3" height="9" rx="1.4" fill="#3a2c63" stroke="#e2ccff" stroke-width="0.8"/>
+  <rect x="2" y="4.6" width="8" height="4.8" rx="2.2" fill="#241a40"/>
+  <circle cx="3.6" cy="7" r="1.5" fill="#c08bff"/>
+  <!-- rune glow on the flat -->
+  <path d="M19 5.4 L22 7 L19 8.6 M25 5 L27 7 L25 9" stroke="#f2e6ff" stroke-width="0.9" fill="none" stroke-opacity="0.95"/>
+</svg>
