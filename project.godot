@@ -25,6 +25,13 @@ AudioManager="*res://scripts/core/audio_manager.gd"
 GameData="*res://scripts/core/game_data.gd"
 _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 
+[audio]
+
+; Web exports default to the "Sample" (Web Audio buffer) playback path, which
+; leaks/crashes under heavy SFX with per-play pitch_scale on Chrome
+; (godotengine/godot#96068, #115560). Force the AudioWorklet "Stream" path.
+general/default_playback_type.web=1
+
 [display]
 
 window/size/viewport_width=1280
