@@ -3,8 +3,10 @@
 Goal: take the existing prototype (one character, one stage, one ambient drone, no meta-progression)
 to a **complete, end-to-end bullet-heaven game** at the level of Halls of Torment / Army of Ruin:
 meta-progression, multiple characters and stages, weapon ascensions, achievements/codex, a full
-synthesized music suite with a real mastering chain, and a global art quality pass — with **every
-asset authored in-repo** (hand-written SVG XML + GDScript audio synthesis; no external packs).
+synthesized music suite with a real mastering chain, and a Blender-based pre-rendered sprite
+pipeline for all entities (the Halls of Torment look) — with **every asset authored in-repo**
+(committed bpy build/render scripts for 3D-rendered sprites, hand-written SVG XML for UI/icons,
+GDScript audio synthesis; no external packs, models, fonts, or samples).
 
 How to execute: phases are designed to run **consecutively in fresh chat contexts** (e.g. via
 `/claude-mem:do`). Each phase is self-contained: it lists what to build, exact copy-from patterns
@@ -35,9 +37,13 @@ phase.
    (simple) or `scripts/ui/level_up_screen.gd` (card grid) and use `UiTheme` helpers
    (`scripts/ui/ui_theme.gd:16-93`). Every interactive element needs keyboard/controller focus
    (UiTheme.make_button already wires focus + hover/click audio).
-7. **All art = hand-authored SVG XML** under `assets/generated/` following existing conventions
-   (32×28 entities, 64×64 weapon tiles with the `rect rx=10 fill="#141022" stroke="#43395f"` frame,
-   48×48 icon tiles). All audio = GDScript synthesis. No downloaded assets, fonts, or samples.
+7. **All art is authored in-repo, two pipelines**: entities/props = pre-rendered sprite sheets
+   produced by committed Blender scripts under `scripts/blender/` (Phase 3; final assets MUST be
+   reproducible headless — Blender MCP sessions are for iteration, committed scripts are the
+   source of truth); UI/icons/flat decals = hand-authored SVG XML under `assets/generated/`
+   following existing conventions (64×64 weapon tiles with the `rect rx=10 fill="#141022"
+   stroke="#43395f"` frame, 48×48 icon tiles). All audio = GDScript synthesis. No downloaded
+   assets, fonts, samples, or models.
 8. **Anti-pattern: inventing APIs.** Before using any engine class/method not already used in this
    repo, verify it exists: `ClassDB.class_exists("AudioEffectHardLimiter")`,
    `ClassDB.class_has_method(...)`, or check in-editor docs. Known traps listed per phase.
@@ -109,6 +115,14 @@ all docs/*.md).
   (McpTestSuite, run via godot-ai `test_run`); `scripts/tools/validate_project.gd` (headless,
   exit-code gate in CI); `.github/workflows/deploy-pages.yml` (Godot 4.6.3, validate → export web
   → deploy Pages from master/fable5_test).
+- **3D tooling (machine setup, 2026-06-12)**: the official Blender MCP (blender.org Lab) is
+  installed and verified — Blender 5.1.1 at `C:\Program Files\Blender Foundation\Blender 5.1\`,
+  extension `bl_ext.lab_blender_org.mcp` auto-starts a bridge on localhost:9876 (requires
+  Blender's System ▸ Network ▸ "Allow Online Access" to stay enabled); Claude Code launches the
+  MCP server via `uvx --from git+https://projects.blender.org/lab/blender_mcp.git@v1.0.0#subdirectory=mcp blender-mcp`.
+  Tools: `execute_blender_code`, scene/object summaries, viewport screenshots and renders,
+  Python API doc search. Headless renders (`blender --background --python <script> -- <args>`)
+  need neither the addon nor online access.
 
 ### What is ABSENT (confirmed by discovery; this plan builds it)
 - No meta-progression of any kind (no currency, no permanent upgrades, no unlock persistence).
@@ -268,7 +282,69 @@ high-production audio.
 
 ---
 
-## PHASE 3 — PLAYABLE CHARACTERS (5)
+## PHASE 3 — BLENDER PRE-RENDER SPRITE PIPELINE (entities go 3D-rendered)
+
+**Why here**: this is how Halls of Torment gets its look — 3D models pre-rendered to 2D sprite
+sheets. The pipeline must exist BEFORE characters (Phase 4) and stages (Phase 5) so their entity
+art is authored through it once, not drawn as SVG and discarded later. Tooling is already set up
+(see Phase 0 "3D tooling"): use Blender MCP interactively to iterate on a model, then bake the
+result into committed scripts — **a final asset that can't be regenerated headless doesn't exist**.
+
+### What to implement
+1. **`scripts/blender/` toolkit** (all committed, pure bpy, deterministic — fixed seeds, no
+   wall-clock randomness):
+   - `studio.py` — shared render studio builder: orthographic camera pitched ~50°, 8 yaw stops
+     (45° steps), 3-point light rig (warm key, cool fill, rim for silhouette readability), EEVEE
+     with fixed sample count, transparent film, frame-size presets (96px entities / 160px bosses
+     / 64px pickups).
+   - `palette.py` — shared material library matching the game's hex palette (parchment, gold,
+     soul-blue `7fd4ff`, blood, curse-purple) so all entities read as one art style.
+   - `entities/<id>.py` — one builder per entity producing mesh + simple armature with a 4-frame
+     walk action (procedural blockout: skin/mirror/subsurf modifiers, then decimate; no sculpting
+     dependence).
+   - `render_sprites.py` — headless entry point:
+     `blender --background --python scripts/blender/render_sprites.py -- --entity <id> | --all`.
+     Renders idle (1) + walk (4) frames × 8 directions, packs ONE sheet PNG per entity
+     (rows = direction, cols = frame) into `assets/generated/prerendered/<id>.png` + a
+     `<id>.json` manifest `{frame_w, frame_h, dirs, frames, anchor}`.
+2. **Godot integration**:
+   - New `scripts/game/sheet_sprite.gd` helper: given sheet + manifest, sets `Sprite2D`
+     `region_rect` from (direction, frame). Facing = 8-way snap of velocity; frame clock driven
+     by the existing `_phase` accumulators so the procedural bob/squash in `_animate()`
+     (player.gd:134-157, enemy.gd:306-326) layers on top unchanged.
+   - Migration flag, not big-bang: entity/character defs gain optional
+     `"sheet": "res://assets/generated/prerendered/<id>.png"`; when absent the existing SVG
+     `"sprite"` path is used. The game stays shippable at every commit.
+3. **Convert the existing roster as proof**: wardkeeper + all 8 enemies + Cursed Castellan
+   (160px, extra cast-pose row). Iterate looks via Blender MCP (`execute_blender_code`,
+   viewport screenshot/thumbnail tools), bake into `entities/*.py`, render, wire flags.
+4. **Budgets** (record actuals in the commit message): frame 96×96 (boss 160), per-sheet PNG
+   ≤ ~1.5 MB, total repo growth this phase ≤ ~15 MB. CI does NOT need Blender — rendered PNGs
+   are committed; note this in `docs/ART_PIPELINE.md`.
+5. **Validator/tests**: extend `validate_project.gd` — every def with `sheet` has PNG + JSON and
+   manifest dims divide the sheet dims; extend `game_data_integrity` to assert the converted
+   roster (≥10 sheets).
+
+### Verification checklist
+- [ ] Suites + validator pass with the new sheet checks.
+- [ ] `render_sprites.py --all` regenerates every sheet from a clean checkout, headless, with
+      Blender GUI closed (no MCP dependency).
+- [ ] In-game: converted entities animate with 8-way facing; collision feels identical (defs'
+      `radius`/`scale` untouched); F3 shows no FPS change at wave 9 (region swap is free).
+- [ ] Before/after screenshot per entity committed to the PR description.
+
+### Anti-pattern guards
+- Never hand-edit a rendered PNG or leave a change only in a Blender MCP session / .blend file —
+  regenerate from the committed script or it didn't happen.
+- Don't delete an entity's SVG until its sheet ships (the `sheet` flag is the migration switch).
+- Fit renders to the existing collision tuning — never change enemy def `radius`/`scale` to fit
+  a render.
+- Sprite anchor matches current Sprite2D centering; don't introduce per-entity offsets in code.
+- Headless render args go after a standalone `--`; don't pass them before it (Blender eats them).
+
+---
+
+## PHASE 4 — PLAYABLE CHARACTERS (5)
 
 ### What to implement
 1. **CharacterData table** (new `scripts/data/character_data.gd`): 5 entries
@@ -301,8 +377,10 @@ high-production audio.
 5. **Unlock evaluation**: MetaSystem (or new ProgressSystem) checks unlock conditions on
    `record_run` + relevant events; toast "CHARACTER UNLOCKED" (simple CanvasLayer banner —
    copy HUD wave-banner pattern hud.gd:113-119). SFX cue `char_unlock`.
-6. **Art**: 4 new 32×28 character SVGs + 5 portraits 96×96 (`assets/generated/characters/`),
-   hand-authored, palette-consistent (parchment/gold/soul-blue accents per character identity).
+6. **Art (via the Phase-3 pipeline)**: 4 new entity builder scripts in
+   `scripts/blender/entities/` + rendered sheets, and 5 placeholder portraits (~128px busts
+   rendered from the same models with the shared studio lighting; polished in Phase 8) —
+   palette-consistent (parchment/gold/soul-blue accents per character identity).
 
 ### Verification checklist
 - [ ] Suites + validator pass; new integrity checks: 5 characters, sprites/portraits exist,
@@ -320,7 +398,7 @@ high-production audio.
 
 ---
 
-## PHASE 4 — STAGES & BOSSES (3 stages, 3 bosses)
+## PHASE 5 — STAGES & BOSSES (3 stages, 3 bosses)
 
 ### What to implement
 1. **Restructure waves per stage**: `wave_data.gd` becomes
@@ -345,8 +423,10 @@ high-production audio.
      spore_mites), `thorn_stalker` (charger), `rot_priest` (ranged buffer — heals nearby, new
      small behavior). Boss **The Gardener of Graves**.
    New enemy recipe per discovery (enemy_data entry + scene copying `scenes/enemies/
-   BoneCrawler.tscn` 12-line pattern + 32×28 SVG + wave comp entries + behavior dispatch in
-   `enemy.gd:_behavior_move` if new). ~7 new enemy SVGs + recolor variants.
+   BoneCrawler.tscn` 12-line pattern + pre-rendered sheet via the Phase-3 pipeline + wave comp
+   entries + behavior dispatch in `enemy.gd:_behavior_move` if new). ~7 new enemy builder
+   scripts in `scripts/blender/entities/`; recolor variants = `palette.py` material swaps,
+   re-rendered (cheap).
 5. **Boss generalization**: `enemy_data.gd` `BOSS` → `const BOSSES := {"cursed_castellan":
    {...existing...}, "drowned_abbot": {...}, "gardener_of_graves": {...}}` (keep `BOSS` alias to
    castellan during migration). New boss scripts extend `boss.gd` overriding the phase-attack
@@ -363,8 +443,9 @@ high-production audio.
    (cache per stage id; render during stage select/menu with the Phase-1 fallback rule).
 8. **Per-stage records on result screens** + `record_run` extension (per-stage best wave/score —
    new nested save key, merge-safe).
-9. **Environment art**: 2 new prop sets (floor a/b, crack, sigil, pillar, torch variants) +
-   2 stage banners, hand-authored SVG.
+9. **Environment art**: 2 new prop sets — flat decals (floor a/b, crack, sigil) hand-authored
+   SVG; dimensional props (pillar, torch variants) rendered via the Phase-3 pipeline —
+   + 2 stage banners, hand-authored SVG.
 
 ### Verification checklist
 - [ ] Suites + validator extended: stages table valid (palette/prop/boss refs exist), every
@@ -385,7 +466,7 @@ high-production audio.
 
 ---
 
-## PHASE 5 — CONTENT DEPTH: ASCENSIONS, CHESTS/PICKUPS, ENDLESS, CURSE TIERS
+## PHASE 6 — CONTENT DEPTH: ASCENSIONS, CHESTS/PICKUPS, ENDLESS, CURSE TIERS
 
 ### What to implement
 1. **Weapon Ascensions** (one per weapon, 18 total): add `"ascension"` block to each weapon def
@@ -405,8 +486,9 @@ high-production audio.
    `chest_jackpot`).
 3. **New pickups**: `bomb` (clears hostile projectiles + 250 area damage via
    `area_damage` game_world.gd:268), `frost` (global 3 s slow — iterate `enemies_alive`,
-   `apply_slow(0.45, 3.0)` enemy.gd:238-269 pattern), rare drops + coin from Phase 2. Art for
-   all pickup kinds (pickup.gd currently draws procedurally — extend its draw for new kinds).
+   `apply_slow(0.45, 3.0)` enemy.gd:238-269 pattern), rare drops + coin from Phase 2. Pickup art
+   is procedural-first (pickup.gd already draws procedurally — extend its draw for new kinds);
+   Phase 8 replaces them with 64px pre-rendered sprites.
 4. **Endless Vigil**: on victory, button "CONTINUE THE VIGIL" → endless scaling: waves cycle the
    stage's waves 7-9 with `hp_mult *= 1.18` per cycle, `elite_chance` +0.02 (cap 0.5), interval
    floor 0.3; boss respawns every 5 cycles with +60% HP. Track `endless_minutes` per-stage best.
@@ -436,7 +518,7 @@ high-production audio.
 
 ---
 
-## PHASE 6 — ACHIEVEMENTS, UNLOCK QUESTS, CODEX
+## PHASE 7 — ACHIEVEMENTS, UNLOCK QUESTS, CODEX
 
 ### What to implement
 1. **AchievementData table** (new `scripts/data/achievement_data.gd`): ~28 entries
@@ -474,48 +556,47 @@ high-production audio.
 
 ---
 
-## PHASE 7 — ART PRODUCTION PASS (global quality uplift)
+## PHASE 8 — ART POLISH PASS (animation breadth + world dressing)
 
-### What to implement (all hand-authored SVG XML; keep palette + tile-frame conventions)
-1. **Entity detail pass**: redraw all character/enemy/boss SVGs at 2× internal detail (same
-   viewBox; add shading layers, rim light on the dark side, eye glow, silhouette cleanup).
-   Read 3 existing files first (e.g. `assets/generated/enemies/hollow_knight.svg`) and keep the
-   layer ordering idiom.
-2. **Frame-swap animation**: author 2-3 pose variants per moving entity
-   (`<id>_walk_a/b.svg`, boss `<id>_cast.svg`); extend procedural `_animate()`
-   (player.gd:134-157, enemy.gd:306-326) to swap `sprite.texture` on the existing bob phase
-   (preload both textures in `setup()`; swap at phase zero-crossings). NO AnimationPlayer.
-3. **Boss phase visuals**: per-phase tint + part swap (crown ignites at enrage etc.) + bigger
-   death sequence (multi-burst FX choreography using existing fx kinds).
-4. **Stage props pass**: 6-10 extra props per stage (statues, bones, wells, roots), drop
-   shadows, banner variants; arena scatter code already supports lists (arena.gd).
-5. **UI art**: redrawn emblem, per-stage menu backgrounds (1280×720), character portraits polish,
-   sanctum/codex header crests, upgrade-card corner filigree (StyleBox stays; filigree = small
-   SVG corner sprites).
-6. **VFX pass**: 3 new FX kinds where impact is weak (`crit_flash`, `ascend_burst`,
+### What to implement (3D renders via the Phase-3 pipeline; SVG only for UI/icons/flat decals)
+1. **Animation breadth**: new sheet rows via the pipeline — attack/cast rows for ranged enemies
+   and all 3 bosses, a 1-frame hit-flinch row, dash pose for player characters. Extend the
+   manifest schema (`rows: {walk, cast, ...}`) and `sheet_sprite.gd` row selection.
+2. **Boss phase visuals**: per-phase material variants rendered as separate rows (crown ignites
+   at enrage etc.) + bigger death sequence (multi-burst FX choreography using existing fx kinds).
+3. **Catch-up + pickups**: any entity still on SVG fallback gets its model (grep defs for missing
+   `sheet` keys); chest/coin/bomb/frost pickups rendered at 64px with a sparkle frame each.
+4. **Stage props pass**: dimensional props (statues, bones, wells, roots, gate pieces) rendered
+   via the pipeline, 6-10 per stage with baked drop shadows; flat decals (cracks, sigils) stay
+   SVG; arena scatter code already supports lists (arena.gd).
+5. **Portraits**: ~256px character busts rendered from the Phase-4 models with studio lighting
+   (select screen + codex), replacing any placeholder portraits.
+6. **UI art (SVG)**: redrawn emblem, per-stage menu backgrounds (1280×720), sanctum/codex header
+   crests, upgrade-card corner filigree (StyleBox stays; filigree = small SVG corner sprites).
+7. **VFX pass**: 3 new FX kinds where impact is weak (`crit_flash`, `ascend_burst`,
    `chest_sparkle`) copying fx.gd kind pattern (:135-141); projectile draw upgrades (brighter
    cores, longer trails for ascended).
-7. **Consistency audit**: every icon referenced by every data table exists and uses the right
-   tile frame (the validator already checks existence; eyeball a contact sheet — load all icons
-   into a debug grid scene behind `OS.is_debug_build()`).
+8. **Consistency audit**: every icon/sheet referenced by every data table exists (validator
+   covers existence; eyeball a contact sheet — load all icons + sheets into a debug grid scene
+   behind `OS.is_debug_build()`).
 
 ### Verification checklist
-- [ ] Validator + suites pass (icon existence checks now cover ~200 SVGs).
-- [ ] Editor screenshot set: menu, each stage arena, each boss, level-up cards, sanctum, codex —
-      visually coherent, no missing-texture squares.
-- [ ] Frame-swap animation visible on player + 3 enemy types; no texture-swap hitches (textures
-      preloaded).
-- [ ] Web bundle size delta < ~1.5 MB (SVGs are tiny; confirm).
+- [ ] Validator + suites pass (sheet/manifest + icon checks across all content).
+- [ ] `render_sprites.py --all` still regenerates everything from a clean checkout.
+- [ ] Editor screenshot set: menu, each stage arena, each boss (each phase), level-up cards,
+      sanctum, codex — visually coherent, no missing-texture squares, no SVG-fallback entities
+      left unintentionally.
+- [ ] Web bundle size delta recorded; total prerendered art within the ~30 MB project budget.
 
 ### Anti-pattern guards
-- Never change viewBox dimensions of existing sprites (collision radius `radius` in enemy defs
-  is tuned to them).
+- All Phase-3 guards still apply (regenerable-or-it-doesn't-exist, no radius changes, anchors).
+- Never change viewBox dimensions of remaining SVGs (icons/decals are layout-tuned).
 - No raster embeds, no external fonts, no `<image>` tags in SVGs (ThorVG renders vectors only —
   embedded rasters bloat and may not render).
 
 ---
 
-## PHASE 8 — SFX PRODUCTION PASS (high-production audio, part 2)
+## PHASE 9 — SFX PRODUCTION PASS (high-production audio, part 2)
 
 ### What to implement
 1. **Re-render all SFX at 32000 Hz** (match music): change `SAMPLE_RATE` in audio_manager.gd
@@ -532,7 +613,7 @@ high-production audio.
    (downsweep + choir pad gust + debris noise), chest_open (latch click + harp gliss + shimmer).
    The `_synth()` engine already supports all needed layers — sum multiple `_synth_params`
    renders into one buffer (new small helper `_synth_layered(list)`).
-5. **Coverage audit**: every game event has a cue — new ones from Phases 2-6 (`coin_pickup`,
+5. **Coverage audit**: every game event has a cue — new ones from Phases 2-7 (`coin_pickup`,
    `marks_payout`, `meta_purchase`, `reroll`, `banish`, `char_unlock`, `stage_select`,
    `chest_*`, `ascension`, `achievement_toast`, `boss_phase`, `frost`, `bomb`, per-boss spawn
    variants `boss_spawn_<id>`). Integrity test enumerates required cue ids vs SFX dict (extend
@@ -555,7 +636,7 @@ high-production audio.
 
 ---
 
-## PHASE 9 — SETTINGS, UX & GAME-FEEL POLISH
+## PHASE 10 — SETTINGS, UX & GAME-FEEL POLISH
 
 ### What to implement
 1. **Settings screen** (menu + pause entry): Music slider, SFX slider (wire to Phase-1 buses;
@@ -590,7 +671,7 @@ high-production audio.
 
 ---
 
-## PHASE 10 — BALANCE & PERFORMANCE
+## PHASE 11 — BALANCE & PERFORMANCE
 
 ### What to implement
 1. **Balance doc** `docs/BALANCE.md`: DPS budget per wave (enemy HP × spawn rate vs expected
@@ -621,13 +702,13 @@ high-production audio.
 
 ---
 
-## PHASE 11 — RELEASE & FINAL VERIFICATION (final phase)
+## PHASE 12 — RELEASE & FINAL VERIFICATION (final phase)
 
 ### What to implement
 1. **Docs refresh**: README (features, controls, screenshots refs), `docs/GAME_DESIGN.md`
    (characters/stages/ascensions/meta/achievements sections), `docs/TECHNICAL_ARCHITECTURE.md`
    (buses, MusicDirector, MetaSystem, ProgressSystem, StageData), `docs/ART_PIPELINE.md`
-   (animation frames, music renderer, caching). Remove stale "Current Limitations" items that
+   (Blender pre-render pipeline + sheet manifests, music renderer, caching). Remove stale "Current Limitations" items that
    are now done; keep honest ones.
 2. **Version**: `project.godot` `config/version="1.0.0"`.
 3. **Full verification protocol** (in order):
@@ -645,12 +726,12 @@ high-production audio.
          input, IndexedDB persistence, stage 3 perf).
 4. **Deploy**: merge to `master` → `.github/workflows/deploy-pages.yml` runs (validator gates
    it) → verify https://jfhutchi.github.io/cursed-keep-survivorst/ plays a full stage-1 run.
-5. **Tag** `v1.0.0` with changelog summarizing the 11 phases.
+5. **Tag** `v1.0.0` with changelog summarizing the 12 phases.
 
 ---
 
 ## PHASE SIZING NOTE
-Phases 1, 4, 5, 7 are the largest (each a full session). If a session runs long, the designed
-split points are: Phase 1 (engine+menu music | combat/boss music), Phase 4 (stage framework +
-crypts | garden + bosses), Phase 5 (ascensions | pickups+endless+tiers), Phase 7 (entities |
-stages+UI art).
+Phases 1, 3, 5, 6, 8 are the largest (each a full session). If a session runs long, the designed
+split points are: Phase 1 (engine+menu music | combat/boss music), Phase 3 (studio+pipeline+player
+| enemy roster + boss), Phase 5 (stage framework + crypts | garden + bosses), Phase 6 (ascensions
+| pickups+endless+tiers), Phase 8 (animation breadth | environment + UI polish).
