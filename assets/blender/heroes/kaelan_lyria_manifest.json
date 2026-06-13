@@ -1,0 +1,42 @@
+{
+  "source_script": "scripts/blender/create_reference_hero_assets.py",
+  "blend": "assets/blender/heroes/kaelan_lyria_hero_assets.blend",
+  "preview": "assets/blender/heroes/preview/kaelan_lyria_roster_preview.png",
+  "style": "Halls-of-Torment readable silhouette with anime/cartoon hero proportions",
+  "scale": {
+    "target_height_m": 2.65,
+    "collision_radius_m": 0.42
+  },
+  "characters": [
+    {
+      "id": "kaelan_emberhawk_ranger",
+      "name": "Kaelan",
+      "title": "Emberhawk Ranger",
+      "role": "ranged hero / ember bolts",
+      "abilities": [
+        "ember_bolt",
+        "hawks_dive",
+        "smoke_step"
+      ],
+      "source_reference": "Photo 1.jpg",
+      "glb": "assets/blender/heroes/glb/kaelan_emberhawk_ranger.glb",
+      "preview": "assets/blender/heroes/preview/kaelan_emberhawk_ranger.png",
+      "notes": "Stylized primitive/curve source model, ready for GLB import or sprite-sheet rendering."
+    },
+    {
+      "id": "lyria_duskbound_rogue",
+      "name": "Lyria",
+      "title": "Duskbound Rogue",
+      "role": "melee hero / twilight blade",
+      "abilities": [
+        "twilight_blade",
+        "shadowstep",
+        "dusk_veil"
+      ],
+      "source_reference": "Photo 2.jpg",
+      "glb": "assets/blender/heroes/glb/lyria_duskbound_rogue.glb",
+      "preview": "assets/blender/heroes/preview/lyria_duskbound_rogue.png",
+      "notes": "Stylized primitive/curve source model, ready for GLB import or sprite-sheet rendering."
+    }
+  ]
+}

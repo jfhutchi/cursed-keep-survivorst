@@ -1,0 +1,133 @@
+{
+  "source_script": "scripts/blender/create_reference_enemy_batch2_assets.py",
+  "blend": "assets/blender/enemies/second_five_enemy_assets.blend",
+  "preview": "assets/blender/enemies/preview/second_five_enemy_roster_preview.png",
+  "style": "Halls-of-Torment enemy readability with anime/cartoon concept-sheet fidelity",
+  "characters": [
+    {
+      "id": "shade_dusk_wraith",
+      "name": "Shade",
+      "title": "Dusk Wraith",
+      "role": "phase assassin / spectral chill",
+      "source_reference": "Photo 1.jpg",
+      "cutout": "shade_dusk_wraith_front.png",
+      "height_m": 2.25,
+      "collision_radius_m": 0.38,
+      "x": -3.0,
+      "label_color": [
+        0.63,
+        0.42,
+        1.0,
+        1.0
+      ],
+      "abilities": [
+        "phase_slice",
+        "haunt_dash",
+        "soul_chill"
+      ],
+      "glb": "assets/blender/enemies/glb/shade_dusk_wraith.glb",
+      "preview": "assets/blender/enemies/preview/shade_dusk_wraith.png",
+      "notes": "Reference-matched transparent front-view standee GLB for immediate game use."
+    },
+    {
+      "id": "maw_slag_hound",
+      "name": "Maw",
+      "title": "Slag Hound",
+      "role": "pack charger / lava bite",
+      "source_reference": "Photo 2.jpg",
+      "cutout": "maw_slag_hound_front.png",
+      "height_m": 1.45,
+      "collision_radius_m": 0.44,
+      "x": -1.5,
+      "label_color": [
+        1.0,
+        0.36,
+        0.08,
+        1.0
+      ],
+      "abilities": [
+        "pounce",
+        "pack_howl",
+        "lava_bite"
+      ],
+      "glb": "assets/blender/enemies/glb/maw_slag_hound.glb",
+      "preview": "assets/blender/enemies/preview/maw_slag_hound.png",
+      "notes": "Reference-matched transparent front-view standee GLB for immediate game use."
+    },
+    {
+      "id": "bulwark_iron_husk",
+      "name": "Bulwark",
+      "title": "Iron Husk",
+      "role": "armored guard / shield wall",
+      "source_reference": "Photo 3.jpg",
+      "cutout": "bulwark_iron_husk_front.png",
+      "height_m": 2.55,
+      "collision_radius_m": 0.52,
+      "x": 0.0,
+      "label_color": [
+        1.0,
+        0.24,
+        0.28,
+        1.0
+      ],
+      "abilities": [
+        "shield_slam",
+        "march_guard",
+        "iron_bash"
+      ],
+      "glb": "assets/blender/enemies/glb/bulwark_iron_husk.glb",
+      "preview": "assets/blender/enemies/preview/bulwark_iron_husk.png",
+      "notes": "Reference-matched transparent front-view standee GLB for immediate game use."
+    },
+    {
+      "id": "glob_rotspore_spitter",
+      "name": "Glob",
+      "title": "Rotspore Spitter",
+      "role": "spore artillery / slime trail",
+      "source_reference": "Photo 4.jpg",
+      "cutout": "glob_rotspore_spitter_front.png",
+      "height_m": 1.55,
+      "collision_radius_m": 0.5,
+      "x": 1.5,
+      "label_color": [
+        0.78,
+        0.86,
+        0.3,
+        1.0
+      ],
+      "abilities": [
+        "spore_glob",
+        "slime_trail",
+        "burst_puff"
+      ],
+      "glb": "assets/blender/enemies/glb/glob_rotspore_spitter.glb",
+      "preview": "assets/blender/enemies/preview/glob_rotspore_spitter.png",
+      "notes": "Reference-matched transparent front-view standee GLB for immediate game use."
+    },
+    {
+      "id": "rattle_bone_drudge",
+      "name": "Rattle",
+      "title": "Bone Drudge",
+      "role": "skeleton skirmisher / bone toss",
+      "source_reference": "Photo 5.jpg",
+      "cutout": "rattle_bone_drudge_front.png",
+      "height_m": 2.1,
+      "collision_radius_m": 0.36,
+      "x": 3.0,
+      "label_color": [
+        0.78,
+        0.94,
+        0.34,
+        1.0
+      ],
+      "abilities": [
+        "rust_slash",
+        "grave_stumble",
+        "bone_toss"
+      ],
+      "glb": "assets/blender/enemies/glb/rattle_bone_drudge.glb",
+      "preview": "assets/blender/enemies/preview/rattle_bone_drudge.png",
+      "notes": "Reference-matched transparent front-view standee GLB for immediate game use."
+    }
+  ]
+}

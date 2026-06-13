@@ -1,0 +1,133 @@
+{
+  "source_script": "scripts/blender/create_reference_enemy_assets.py",
+  "blend": "assets/blender/enemies/first_five_enemy_assets.blend",
+  "preview": "assets/blender/enemies/preview/first_five_enemy_roster_preview.png",
+  "style": "Halls-of-Torment enemy readability with anime/cartoon concept-sheet fidelity",
+  "characters": [
+    {
+      "id": "flit_gloom_bat",
+      "name": "Flit",
+      "title": "Gloom Bat",
+      "role": "flying harasser / sonic knockback",
+      "source_reference": "Photo 1.jpg",
+      "cutout": "flit_gloom_bat_front.png",
+      "height_m": 1.45,
+      "collision_radius_m": 0.34,
+      "x": -2.8,
+      "label_color": [
+        0.76,
+        0.44,
+        1.0,
+        1.0
+      ],
+      "abilities": [
+        "swoop_dive",
+        "echo_screech",
+        "wing_buffet"
+      ],
+      "glb": "assets/blender/enemies/glb/flit_gloom_bat.glb",
+      "preview": "assets/blender/enemies/preview/flit_gloom_bat.png",
+      "notes": "Reference-matched transparent front-view standee GLB for immediate game use."
+    },
+    {
+      "id": "thorn_tomb_archer",
+      "name": "Thorn",
+      "title": "Tomb Archer",
+      "role": "ranged skeleton / cursed arrows",
+      "source_reference": "Photo 2.jpg",
+      "cutout": "thorn_tomb_archer_front.png",
+      "height_m": 2.25,
+      "collision_radius_m": 0.4,
+      "x": -1.4,
+      "label_color": [
+        0.7,
+        1.0,
+        0.22,
+        1.0
+      ],
+      "abilities": [
+        "grave_shot",
+        "volley_step",
+        "pinning_arrow"
+      ],
+      "glb": "assets/blender/enemies/glb/thorn_tomb_archer.glb",
+      "preview": "assets/blender/enemies/preview/thorn_tomb_archer.png",
+      "notes": "Reference-matched transparent front-view standee GLB for immediate game use."
+    },
+    {
+      "id": "rend_abyssal_reaver",
+      "name": "Rend",
+      "title": "Abyssal Reaver",
+      "role": "elite brute / ruin cleave",
+      "source_reference": "Photo 3.jpg",
+      "cutout": "rend_abyssal_reaver_front.png",
+      "height_m": 2.75,
+      "collision_radius_m": 0.56,
+      "x": 0.0,
+      "label_color": [
+        1.0,
+        0.22,
+        0.16,
+        1.0
+      ],
+      "abilities": [
+        "ruin_cleave",
+        "infernal_charge",
+        "dread_roar"
+      ],
+      "glb": "assets/blender/enemies/glb/rend_abyssal_reaver.glb",
+      "preview": "assets/blender/enemies/preview/rend_abyssal_reaver.png",
+      "notes": "Reference-matched transparent front-view standee GLB for immediate game use."
+    },
+    {
+      "id": "vex_grave_hexer",
+      "name": "Vex",
+      "title": "Grave Hexer",
+      "role": "caster / curse fields",
+      "source_reference": "Photo 4.jpg",
+      "cutout": "vex_grave_hexer_front.png",
+      "height_m": 2.35,
+      "collision_radius_m": 0.42,
+      "x": 1.4,
+      "label_color": [
+        0.72,
+        0.36,
+        1.0,
+        1.0
+      ],
+      "abilities": [
+        "hex_bolt",
+        "wither_sigil",
+        "soul_drain"
+      ],
+      "glb": "assets/blender/enemies/glb/vex_grave_hexer.glb",
+      "preview": "assets/blender/enemies/preview/vex_grave_hexer.png",
+      "notes": "Reference-matched transparent front-view standee GLB for immediate game use."
+    },
+    {
+      "id": "nib_cinder_scamp",
+      "name": "Nib",
+      "title": "Cinder Scamp",
+      "role": "swarm melee / ember scratch",
+      "source_reference": "Photo 5.jpg",
+      "cutout": "nib_cinder_scamp_front.png",
+      "height_m": 1.35,
+      "collision_radius_m": 0.3,
+      "x": 2.8,
+      "label_color": [
+        1.0,
+        0.42,
+        0.1,
+        1.0
+      ],
+      "abilities": [
+        "lunge",
+        "swarm_rush",
+        "ember_scratch"
+      ],
+      "glb": "assets/blender/enemies/glb/nib_cinder_scamp.glb",
+      "preview": "assets/blender/enemies/preview/nib_cinder_scamp.png",
+      "notes": "Reference-matched transparent front-view standee GLB for immediate game use."
+    }
+  ]
+}
